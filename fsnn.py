@@ -5,11 +5,12 @@ Purpose: Generate neural networks from security data and predict future prices.
 '''
 
 import pandas.io.data as web  # Package and modules for importing data; this code may change depending on pandas version
+import pandas as pd
 from datetime import date, datetime, timedelta
 import numpy as np
-import math
 import pickle
-
+import sys
+import matplotlib.pyplot as plt
 
 class FSNN:
     '''Control the Neural Network and input data.'''
@@ -19,8 +20,8 @@ class FSNN:
         the characteristics of a new network might be.'''
 
         security_parameters = ['Close', 'Open', 'Volume', 'Adj Close',
-                               '5day_moving_avg', '10day_moving_avg', '20day_moving_avg', '50day_moving_avg',
-                               '100day_moving_avg', '200day_moving_avg']
+                               '5dma', '10dma', '20dma', '50dma',
+                               '100dma', '200dma']
 
         network_action = ''
         network_action = raw_input('Would you like to create a new network ("n") or load an existing one ("l")? ')
@@ -30,17 +31,17 @@ class FSNN:
             while network_settings_accurate == 'N':
                 if raw_input('Default(d) or new(n) settings? ').lower() == 'd':
                     name = 'yhoo_fsnn'
-                    security = 'YHOO'
-                    rows = 4
-                    columns = 3
+                    security = 'NEM'
+                    rows = 10
+                    columns = 10
                     training_testing_ratio = 0.7
-                    input_vector_parameters = ['Close', 'Open']
-                    outputs = [1]
+                    input_vector_parameters = ['Close', 'Open', 'Volume', '50dma', '200dma']
+                    outputs = [1, 5, 10, 20, 50, 100, 200]
                     learning_rate = 0.05
                     neuron_activation_function_name = 'sigmoid'
-                    neuron_activation_function = getattr(FSNN, neuron_activation_function_name)
+                    neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
                     effector_activation_function_name = 'linear'
-                    effector_activation_function = getattr(FSNN, effector_activation_function_name)
+                    effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
                 else:
                     name = raw_input('Name your network: ')
 
@@ -71,10 +72,10 @@ class FSNN:
                     print('Activation Functions: sigmoid, tanh, or linear')
                     neuron_activation_function_name = raw_input(
                         'Which activation function would you like to use for NEURONS?: ')
-                    neuron_activation_function = getattr(FSNN, neuron_activation_function_name)
+                    neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
                     effector_activation_function_name = raw_input(
                         'Which activation function would you like to use for EFFECTORS?: ')
-                    effector_activation_function = getattr(FSNN, effector_activation_function_name)
+                    effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
 
                 print('*** Here are the network settings you have selected ***')
                 print('Name: %s' % name)
@@ -102,50 +103,30 @@ class FSNN:
                                    effector_activation_function=effector_activation_function,
                                    learning_rate=learning_rate)
 
+            self.network.graph_error_over_time()
+
+            self.save_network()
+
         elif network_action.strip() == 'load':
 
-            network_location = input("Please type the address of the network's file: ")
-            self.network = pickle.load(open(network_location, 'rb'))
+            self.load_network()
 
-        # do something else
+    def load_network(self):
+        '''Load network from file.'''
 
-    @staticmethod
-    def sigmoid(x, deriv=False):
-        '''Sigmoid function and its derivative. Return the matrix after each element has passed through function
-        element-wise. Use numpy. '''
+        network_location = input("Please type the address of the network's file: ")
+        self.network = pickle.load(open(network_location, 'rb'))
 
-        if deriv:  # if derivation of activation function requested
-            return FSNN.sigmoid(x) * (1 - FSNN.sigmoid(x))
-
-        else:
-            return 1/(1+np.exp(-x))
-
-    @staticmethod
-    def tanh(x, deriv=False):
-        '''Hyperbolic Tan function and its derivative. Return matrix of element-wise processed numbers.'''
-
-        if deriv:  # if derivation of activation function requested
-            return (1 / np.cosh(x))**2
-
-        else:
-            return np.tanh(x)
-
-    @staticmethod
-    def linear(x, deriv=False):
-        '''Compute the linear function, which is just the same values as are inputted.'''
-
-        if deriv:  # if derivation of activation function requested.
-            return 1
-
-        else:
-            return x
+        return True
 
     def save_network(self):
         '''Save the Network object using pickle library.'''
-        file_name = input('Name file: ')
-        save_location = input('Type file save location: ')
+        file_name = raw_input('Name file: ')
+        save_location = raw_input('Type file save location: ')
         save_path = save_location + '/' + file_name + '.p'
+        print('Saving network...')
         pickle.dump(self.network, open(save_path, 'wb'))
+        print('Network saved successfully!')
         return True
 
 
@@ -155,10 +136,12 @@ class Network:
     SECURITY_START_DATE = datetime(year=1900, month=1, day=1)
     SECURITY_END_DATE = datetime(date.today().year,date.today().month,date.today().day)
 
-    def __init__(self, name='SNP_ANN_FSNN', security='SNP', rows=50, columns=2, training_testing_ratio=0.7,
+    def __init__(self, neuron_activation_function,effector_activation_function, name='SNP_ANN_FSNN', security='SNP',
+                 rows=50, columns=2, training_testing_ratio=0.7,
                  output_vector_parameters=[1, 4], input_vector_parameters=['Close', 'Volume', 'Open', 'Adj Close'],
-                 neuron_activation_function=FSNN.sigmoid,
-                 effector_activation_function=FSNN.linear, learning_rate=0.05):
+                 learning_rate=0.05):
+
+        print('Initializing network...')
 
         self.security = security
         self.name = name
@@ -168,8 +151,14 @@ class Network:
         self.input_vector_parameters = input_vector_parameters
         self.input_vector_parameters_count = len(input_vector_parameters)
 
-        self.neuron_activation_function = neuron_activation_function
-        self.effector_activation_function = effector_activation_function
+        if neuron_activation_function == None:
+            self.neuron_activation_function = self.sigmoid
+        else:
+            self.neuron_activation_function = neuron_activation_function
+        if effector_activation_function == None:
+            self.effector_activation_function = self.linear
+        else:
+            self.effector_activation_function = effector_activation_function
         self.learning_rate = learning_rate
 
         self.receptor_matrix_rows = np.size([0])  # 1 column for the input vectors
@@ -193,11 +182,13 @@ class Network:
         self.outputs = []
         self.inputs = []
         self.delta_errors = []
+        self.vector_output_error = []
 
-        self.prediction_log = []  # store all of the predictions the network ever makes
-        self.prediction_log.append(['epoch', 'learned_from', 'security', 'prediction_start_date', 'input_vector', 'expected_output_vector',
-                 'actual_output_vector', 'errors'])
-        print(self.prediction_log[0])
+        self.prediction_log = {'epoch':[],'learned_from':[],'security':[],'prediction_start_date':[],'input_vector':[],
+                               'expected_output_vector':[],'prediction_end_dates':[],'actual_output_vectors':[],
+                               'errors':[]}  # store all of the predictions the network ever makes
+        print('epoch', 'learned_from', 'security', 'prediction_start_date', 'input_vector', 'expected_output_vector',
+         'prediction_end_dates', 'actual_output_vector', 'errors')
 
         # STORE DIMENSIONS OF NETWORK
         self.network_dimensions = [[self.receptor_matrix_rows, self.receptor_matrix_columns],
@@ -212,6 +203,8 @@ class Network:
 
     def generate_output_vectors(self):
         '''Generate all of the output vectors, using the user's inputted output vectors.'''
+
+        print('     generating output vectors...')
 
         output_vectors_list = []
 
@@ -235,15 +228,17 @@ class Network:
         '''Get the input vectors for the security provided by the user in the form of a list of lists. Return the
         matrix of vectors, with each input vector as a row.'''
 
+        print('     generating input vectors...')
+
         input_vector_list = []
         temp = []
 
         for parameter in self.input_vector_parameters:
 
-            if 'moving_avg' in parameter:
+            if 'ma' in parameter:
                 ma_range = int(parameter.split('d', 1)[0])  # get number of days for moving average
-                close_prices = web.DataReader(self.security, 'yahoo', self.SECURITY_START_DATE, self.SECURITY_END_DATE)['Close']
-                ma = np.round(close_prices.rolling(ma_range, False).mean(),2)
+                close_prices = web.DataReader(self.security, 'yahoo', self.SECURITY_START_DATE, self.SECURITY_END_DATE)
+                ma = pd.rolling_mean(close_prices['Close'], window=ma_range)
                 temp.append(ma)  # tack the moving average onto the input vector
 
             else:
@@ -263,13 +258,17 @@ class Network:
     def generate_vector_date_list(self):
         '''Generate the list of dates corresponding to the vector inputs and outputs.'''
 
+        print('     generating vector date list...')
+
         vector_date_list = web.DataReader(self.security, 'yahoo', self.SECURITY_START_DATE, self.SECURITY_END_DATE)[
             'Close'].index
 
         return vector_date_list
 
-    def fetch_training_data(self):
+    def fetch_training_testing_vectors(self):
         '''Get all of the data for training and for testing, and chop according in the ratio provided by the user.'''
+
+        print('     splicing training/testing data vectors...')
 
         self.input_vectors = self.generate_input_vectors()  # get list of input vectors
         self.output_vectors = self.generate_output_vectors()
@@ -295,6 +294,7 @@ class Network:
         '''The neural network requires the input and output of every neuron to be saved. All of the inputs and outputs
         are saved in separate matrices to improve readability.'''
 
+        print('     building empty weight matrices...')
         # matrix of weights for inputs. Number of rows equals number of input vectors. Number of columns is 1.
         self.weights.append(np.random.rand(self.network_dimensions[0][1], np.size([0])))
         # matrix of weights for hidden layer. Number of rows/cols = number of rows of neurons.
@@ -303,6 +303,7 @@ class Network:
             self.weights.append(np.random.rand(self.network_dimensions[1][0], self.network_dimensions[1][0]))
         self.weights.append(np.random.rand(self.network_dimensions[1][0], self.network_dimensions[2][0]))
 
+        print('     building empty input/output/delta_error matrices...')
         self.reset_i_o_de()
 
         return True
@@ -339,84 +340,41 @@ class Network:
     def train(self):
         '''Train the neural network, ANN or RC, using the split training and testing data.'''
 
-        self.fetch_training_data()
+        self.fetch_training_testing_vectors()
+
+        print('')
+        print('Start Training')
+        print('')
 
         for v in range(len(self.vector_date_list_training_set)):
 
-            # FEED FORWARD
-            self.outputs[0] = self.inputs[0] = np.array([self.input_vectors_training_set[v]]).T
-            input_sum = sum(np.array(np.array(self.weights[0]).T) * np.array(np.array(self.inputs[0]).T)[0])[0]
-            self.inputs[1] = [[input_sum] for x in range(0,self.network_dimensions[1][0])]
+            self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
 
-            for layer_index in range(1, len(self.inputs)-1):    # only go up to the second to last input in loop
+            self.back_propagate(self.output_vectors_training_set[v])
 
-                self.outputs[layer_index] = np.array(self.neuron_activation_function(np.array(self.inputs[layer_index]).T, deriv=False)).T
-                temp = []
+            self.log_prediction(self.vector_date_list_training_set[v], self.input_vectors_training_set[v],
+                                self.output_vectors_training_set[v], learned_from=True)
 
-                for neuron_index in range(len(self.weights[layer_index])):    # iterate over each neuron
-
-                    temp.append(self.outputs[layer_index][neuron_index][0] * np.array(self.weights[layer_index][neuron_index]))    # multiply neuron's charge by each of its weights for the following layer
-
-                self.inputs[layer_index + 1] = np.array([sum(temp)]).T    # sum column, transpose, set as next layer's input
-
-            self.outputs[len(self.outputs) - 1] = self.effector_activation_function(self.inputs[len(self.outputs) - 1], deriv=False)
-
-            # BACK PROPAGATE
-            # calculate delta_errors
-            neuron_index = 0
-            output_error_list = []
-            for expected_output in self.output_vectors_training_set[v]: # calculate delta_error for effector neurons
-
-                output_error_list.append([(expected_output - self.outputs[len(self.outputs) - 1][neuron_index][0])])
-
-                self.delta_errors[len(self.delta_errors) - 1][neuron_index][0] = \
-                    (expected_output - self.outputs[len(self.outputs) - 1][neuron_index][0]) * \
-                    self.effector_activation_function(self.outputs[len(self.outputs) - 1][neuron_index][0],deriv=True)
-                neuron_index += 1
-
-            for layer_index in reversed(range(len(self.delta_errors) - 1)):
-
-                for neuron_index in range(len(self.weights[layer_index])):
-                    # multiply delta errors of following layer with weights of each neuron in current layer and sum to
-                    # get delta error of neuron in current layer
-                    a = np.array(np.array(self.delta_errors[layer_index + 1]).T)*np.array(self.weights[layer_index][neuron_index])
-                    b = sum(a[0])*self.neuron_activation_function(self.outputs[layer_index][neuron_index], deriv=True)
-                    self.delta_errors[layer_index][neuron_index][0] = b
-
-            # update weights
-            for layer_index in range(len(self.inputs) - 1):
-
-                weight_changes = np.array(np.array(self.delta_errors[layer_index]).T) * \
-                                 self.learning_rate * \
-                                 np.array(np.array(self.inputs[layer_index]).T)
-
-                for neuron_index in range(len(self.weights[layer_index])):
-
-                    for weight_index in range(len(self.weights[layer_index][neuron_index])):
-
-                        self.weights[layer_index][neuron_index][weight_index] = \
-                            self.weights[layer_index][neuron_index][weight_index] + weight_changes[0][neuron_index]
-
-            # STORE THE RESULTS IN THE PREDICTION LOG
-            if len(self.prediction_log) > 1:
-                new_epoch = str(int(self.prediction_log[len(self.prediction_log)-1][0]) + 1).zfill(6)
-            else:
-                new_epoch = '000001'
-            learned_from = True
-            Prediction_Start_Date = self.vector_date_list_training_set[v]
-            Input_Vector = np.around(self.input_vectors_training_set[v],3)
-            Expected_Output_Vector = np.around(self.output_vectors_training_set[v],3)
-            Actual_Output_Vector = np.around(self.outputs[len(self.outputs) - 1][0],3)
-            Errors = np.around(output_error_list[0],3)
-
-            self.prediction_log.append(
-                [new_epoch, learned_from, Prediction_Start_Date, Input_Vector, Expected_Output_Vector,
-                 Actual_Output_Vector, Errors])
-
-            weight_changes = None
             self.reset_i_o_de()
 
-            print(self.prediction_log[len(self.prediction_log)-1])
+        print('')
+        print('End Training')
+        print('')
+        print('Start Testing')
+        print('')
+
+        for v in range(len(self.vector_date_list_testing_set)):
+
+            self.forward_propagate(self.input_vectors_testing_set[v], self.output_vectors_testing_set[v])
+
+            self.log_prediction(self.vector_date_list_testing_set[v], self.input_vectors_testing_set[v],
+                                self.output_vectors_testing_set[v], learned_from=False)
+
+            self.reset_i_o_de()
+
+        print('')
+        print('End Testing')
+        print('')
 
     def get_info(self):
         '''Return info on the network at a glance.'''
@@ -434,46 +392,116 @@ class Network:
                 'Effector Matrix Dimensions (r X c): ' + str(self.effector_matrix_rows) + ' X ' + \
                 str(self.effector_matrix_columns)]
 
-    def predict(self, input_vector, prediction_start_date):
-        '''Predict the output(s) of the neural network, using the input_vector. Do not learn from / alter weights
-        based on this input_vector.'''
+    def forward_propagate(self, input_vector, output_vector):
+        '''Predict the output(s) of the network using the given input_vector. Assumes the network has already been
+        built with weight, input, output, and delta_error arrays.'''
 
-        # CHARGE RECEPTORS WITH INPUT VECTOR
-        for col in range(self.network_dimensions[0][1]):
+        # FEED FORWARD
+        self.outputs[0] = self.inputs[0] = np.array([input_vector]).T
+        input_sum = sum(np.array(np.array(self.weights[0]).T) * np.array(np.array(self.inputs[0]).T)[0])[0]
+        self.inputs[1] = np.array([[input_sum] for x in range(0,self.network_dimensions[1][0])])
 
-            for row in range(self.network_dimensions[0][0]):
-                self.network[0][row, col].set_charge(input_vector[row, col])  # set receptor's charge
-                self.network = self.network[0][row, col].fire(self.network)  # fire and get network with changes
+        for layer_index in range(1, len(self.inputs)-1):    # only go up to the second to last input in loop
 
-        # FEEDFORWARD INPUTS. *** FIRE BETWEEN NEURONS AND TO EFFECTORS
-        for col in range(self.network_dimensions[1][1]):
+            self.outputs[layer_index] = np.array(self.neuron_activation_function(np.array(self.inputs[layer_index]).T, deriv=False)).T
+            temp = []
 
-            for row in range(self.network_dimensions[1][0]):
-                self.network = self.network[1][row, col].fire(self.network)  # fire each neuron
+            for neuron_index in range(len(self.weights[layer_index])):    # iterate over each neuron
 
-        # CALCULATE ERRORS
-        output_error_list = []
-        output_list = []
-        matrix_index = 2
-        for col in reversed(range(self.network_dimensions[matrix_index][1])):
+                temp.append(self.outputs[layer_index][neuron_index][0] * np.array(self.weights[layer_index][neuron_index]))    # multiply neuron's charge by each of its weights for the following layer
 
-            for row in range(self.network_dimensions[matrix_index][0]):
-                self.network[matrix_index][row, col].calculate_error()
-                output_error_list.append(self.network[matrix_index][row, col].error)
-                output_list.append(self.network[matrix_index][row, col].activated_charge)
+            self.inputs[layer_index + 1] = np.array([sum(temp)]).T    # sum column, transpose, set as next layer's input
+
+        self.outputs[len(self.outputs) - 1] = self.effector_activation_function(self.inputs[len(self.outputs) - 1], deriv=False)
+
+        # calculate errors in outputs
+        neuron_index = 0
+        self.vector_output_error = []
+        for expected_output in output_vector:  # calculate delta_error for effector neurons
+
+            self.vector_output_error.append(
+                [((expected_output - self.outputs[len(self.outputs) - 1][neuron_index][0]) / expected_output)])
+
+            neuron_index += 1
+
+        if self.vector_output_error == []:
+            self.vector_output_error = [[0]]
+
+    def back_propagate(self, output_vector):
+        '''Back propagate the output error. Assumes an input has already been forward propagated.'''
+
+        # BACK PROPAGATE
+        # calculate delta_errors
+        neuron_index = 0
+        for expected_output in output_vector:  # calculate delta_error for effector neurons
+
+            self.delta_errors[len(self.delta_errors) - 1][neuron_index][0] = \
+                (self.effector_activation_function(expected_output,deriv=False) - self.outputs[len(self.outputs) - 1][neuron_index][0]) * \
+                self.effector_activation_function(self.inputs[len(self.inputs) - 1][neuron_index][0], deriv=True)
+            neuron_index += 1
+
+        for layer_index in reversed(range(len(self.delta_errors) - 1)):
+
+            for neuron_index in range(len(self.weights[layer_index])):
+                # multiply delta errors of following layer with weights of each neuron in current layer and sum to
+                # get delta error of neuron in current layer
+                a = np.array(np.array(self.delta_errors[layer_index + 1]).T) * np.array(
+                    self.weights[layer_index][neuron_index])
+                b = sum(a[0]) * self.neuron_activation_function(self.inputs[layer_index][neuron_index], deriv=True)
+                self.delta_errors[layer_index][neuron_index][0] = b
+
+        # update weights
+        for layer_index in range(len(self.inputs) - 1):
+
+            weight_changes = np.array(np.array(self.delta_errors[layer_index]).T) * \
+                             self.learning_rate * \
+                             np.array(np.array(self.inputs[layer_index]).T)
+
+            for neuron_index in range(len(self.weights[layer_index])):
+
+                for weight_index in range(len(self.weights[layer_index][neuron_index])):
+                    self.weights[layer_index][neuron_index][weight_index] = \
+                        self.weights[layer_index][neuron_index][weight_index] + weight_changes[0][neuron_index]
+
+    def log_prediction(self, date_vector, input_vector, output_vector, learned_from=False):
+        '''Log prediction information: input vector, output vector, prediction start date,'''
+
+        DIGITS_TO_ROUND_OFF = 6
 
         # STORE THE RESULTS IN THE PREDICTION LOG
-        new_epoch = self.prediction_log[-1][0] + 1
-        learned_from = False
-        Prediction_Start_Date = prediction_start_date
-        Input_Vector = input_vector
-        Expected_Output_Vector = []
-        Actual_Output_Vector = output_list
-        Errors = output_error_list
+        if len(self.prediction_log['epoch']) > 1:
+            new_epoch = int(self.prediction_log['epoch'][len(self.prediction_log['epoch']) - 1]) + 1
+        else:
+            new_epoch = 1
+        self.prediction_log['epoch'].append(new_epoch)
 
-        self.prediction_log.append(
-            [new_epoch, learned_from, Prediction_Start_Date, Input_Vector, Expected_Output_Vector,
-             Actual_Output_Vector, Errors])
+        learned_from = learned_from
+        self.prediction_log['learned_from'].append(learned_from)
+
+        self.prediction_log['security'].append(self.security)
+
+        Prediction_Start_Date = date_vector
+        self.prediction_log['prediction_start_date'].append(Prediction_Start_Date)
+
+        Input_Vector = np.around(input_vector, DIGITS_TO_ROUND_OFF)
+        self.prediction_log['input_vector'].append(Input_Vector)
+
+        Expected_Output_Vector = np.around(output_vector, DIGITS_TO_ROUND_OFF)
+        self.prediction_log['expected_output_vector'].append(Expected_Output_Vector)
+
+        Output_Vector_Dates = []
+        for period in self.output_vector_parameters:
+            Output_Vector_Dates.append(date_vector + timedelta(days=period))
+        self.prediction_log['prediction_end_dates'].append(Output_Vector_Dates)
+
+        Actual_Output_Vector = [np.around(self.outputs[len(self.outputs) - 1][x][0], DIGITS_TO_ROUND_OFF) for x in range(len(self.outputs[len(self.outputs) - 1]))]
+        self.prediction_log['actual_output_vectors'].append(Actual_Output_Vector)
+
+        Errors = np.around(self.vector_output_error[0], DIGITS_TO_ROUND_OFF)
+        self.prediction_log['errors'].append(Errors)
+
+        print(new_epoch, learned_from, self.security, Prediction_Start_Date, Input_Vector, Expected_Output_Vector,
+              Output_Vector_Dates, Actual_Output_Vector, Errors)
 
     def predict_and_learn(self, input_vector):
         '''Take in the input_vector, predict an output and learn from that one input vector, by altering the
@@ -482,6 +510,53 @@ class Network:
     def graph_error_over_time(self):
         '''Generate and return a graph from the error value(s) recorded for each input vector, along with the
         predicted and expected values.'''
+        dependent_vars = []
+        for x in self.prediction_log['expected_output_vector']:
+            if len(x) != 0:
+                dependent_vars.append(x[0])
+            else:
+                dependent_vars.append(0)
+        plt.plot(self.prediction_log['prediction_start_date'],dependent_vars)
+
+        dependent_vars = []
+        for x in self.prediction_log['actual_output_vectors']:
+            if len(x) != 0:
+                dependent_vars.append(x[0])
+            else:
+                dependent_vars.append(0)
+
+        plt.plot(self.prediction_log['prediction_start_date'],dependent_vars)
+        plt.show()
+
+        return True
+
+def sigmoid(x, deriv=False):
+    '''Sigmoid function and its derivative. Return the matrix after each element has passed through function
+    element-wise. Use numpy. '''
+
+    if deriv:  # if derivation of activation function requested
+        return sigmoid(x) * (1 - sigmoid(x))
+
+    else:
+        return 1 / (1 + np.exp(-x))
+
+def tanh(x, deriv=False):
+    '''Hyperbolic Tan function and its derivative. Return matrix of element-wise processed numbers.'''
+
+    if deriv:  # if derivation of activation function requested
+        return (1 / np.cosh(x)) ** 2
+
+    else:
+        return np.tanh(x)
+
+def linear(x, deriv=False):
+    '''Compute the linear function, which is just the same values as are inputted.'''
+
+    if deriv:  # if derivation of activation function requested.
+        return 1
+
+    else:
+        return x
 
 if __name__ == '__main__':
     FSNN()
