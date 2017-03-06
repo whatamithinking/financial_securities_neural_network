@@ -31,12 +31,12 @@ class FSNN:
             while network_settings_accurate == 'N':
                 if raw_input('Default(d) or new(n) settings? ').lower() == 'd':
                     name = 'yhoo_fsnn'
-                    security = 'NEM'
-                    rows = 10
-                    columns = 10
+                    security = 'V'
+                    rows = 3
+                    columns = 3
                     training_testing_ratio = 0.7
-                    input_vector_parameters = ['Close', 'Open', 'Volume', '50dma', '200dma']
-                    outputs = [1, 5, 10, 20, 50, 100, 200]
+                    input_vector_parameters = ['Close', '50dma', '200dma']
+                    outputs = [5, 50, 100, 200]
                     learning_rate = 0.05
                     neuron_activation_function_name = 'sigmoid'
                     neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
@@ -346,16 +346,18 @@ class Network:
         print('Start Training')
         print('')
 
-        for v in range(len(self.vector_date_list_training_set)):
+        for i in range(3):
 
-            self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
+            for v in range(len(self.vector_date_list_training_set)):
 
-            self.back_propagate(self.output_vectors_training_set[v])
+                self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
 
-            self.log_prediction(self.vector_date_list_training_set[v], self.input_vectors_training_set[v],
-                                self.output_vectors_training_set[v], learned_from=True)
+                self.back_propagate(self.output_vectors_training_set[v])
 
-            self.reset_i_o_de()
+                self.log_prediction(self.vector_date_list_training_set[v], self.input_vectors_training_set[v],
+                                    self.output_vectors_training_set[v], learned_from=True)
+
+                self.reset_i_o_de()
 
         print('')
         print('End Training')
@@ -430,7 +432,6 @@ class Network:
     def back_propagate(self, output_vector):
         '''Back propagate the output error. Assumes an input has already been forward propagated.'''
 
-        # BACK PROPAGATE
         # calculate delta_errors
         neuron_index = 0
         for expected_output in output_vector:  # calculate delta_error for effector neurons
@@ -483,10 +484,10 @@ class Network:
         Prediction_Start_Date = date_vector
         self.prediction_log['prediction_start_date'].append(Prediction_Start_Date)
 
-        Input_Vector = np.around(input_vector, DIGITS_TO_ROUND_OFF)
+        Input_Vector = np.around(input_vector, DIGITS_TO_ROUND_OFF).tolist()
         self.prediction_log['input_vector'].append(Input_Vector)
 
-        Expected_Output_Vector = np.around(output_vector, DIGITS_TO_ROUND_OFF)
+        Expected_Output_Vector = np.around(output_vector, DIGITS_TO_ROUND_OFF).tolist()
         self.prediction_log['expected_output_vector'].append(Expected_Output_Vector)
 
         Output_Vector_Dates = []
@@ -497,7 +498,7 @@ class Network:
         Actual_Output_Vector = [np.around(self.outputs[len(self.outputs) - 1][x][0], DIGITS_TO_ROUND_OFF) for x in range(len(self.outputs[len(self.outputs) - 1]))]
         self.prediction_log['actual_output_vectors'].append(Actual_Output_Vector)
 
-        Errors = np.around(self.vector_output_error[0], DIGITS_TO_ROUND_OFF)
+        Errors = np.around(self.vector_output_error[0], DIGITS_TO_ROUND_OFF).tolist()
         self.prediction_log['errors'].append(Errors)
 
         print(new_epoch, learned_from, self.security, Prediction_Start_Date, Input_Vector, Expected_Output_Vector,
@@ -510,22 +511,20 @@ class Network:
     def graph_error_over_time(self):
         '''Generate and return a graph from the error value(s) recorded for each input vector, along with the
         predicted and expected values.'''
-        dependent_vars = []
-        for x in self.prediction_log['expected_output_vector']:
-            if len(x) != 0:
-                dependent_vars.append(x[0])
-            else:
-                dependent_vars.append(0)
-        plt.plot(self.prediction_log['prediction_start_date'],dependent_vars)
 
-        dependent_vars = []
-        for x in self.prediction_log['actual_output_vectors']:
-            if len(x) != 0:
-                dependent_vars.append(x[0])
-            else:
-                dependent_vars.append(0)
+        plt.ion()   # enable interactive plotting
 
-        plt.plot(self.prediction_log['prediction_start_date'],dependent_vars)
+        for series_index in range(len(self.prediction_log['expected_output_vector'])):
+            y = [list(x) for x in zip(*self.prediction_log['expected_output_vector'])][series_index]
+            x = [list(x) for x in zip(*self.prediction_log['prediction_end_dates'])][series_index]
+            plt.plot(x,y,label='expected_output_'+str(self.output_vector_parameters[series_index]))
+
+        for series_index in range(len(self.prediction_log['actual_output_vectors'])):
+            y = (np.array(self.prediction_log['actual_output_vectors']).T)[series_index]
+            x = (np.array(self.prediction_log['prediction_end_dates']).T)[series_index]
+            plt.plot(x,y,label='actual_output_'+str(self.output_vector_parameters[series_index]))
+
+        plt.subplot(111).legend()
         plt.show()
 
         return True

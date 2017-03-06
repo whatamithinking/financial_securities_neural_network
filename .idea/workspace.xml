@@ -23,18 +23,17 @@
       <file leaf-file-name="fsnn.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/fsnn.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="164">
-              <caret line="534" column="32" lean-forward="true" selection-start-line="534" selection-start-column="32" selection-end-line="534" selection-end-column="32" />
+            <state relative-caret-position="153">
+              <caret line="522" column="29" lean-forward="false" selection-start-line="522" selection-start-column="29" selection-end-line="522" selection-end-column="29" />
               <folding>
                 <element signature="e#162#282#0" expanded="true" />
-                <element signature="e#5918#6118#0" expanded="false" />
-                <element signature="e#6156#6531#0" expanded="false" />
-                <element signature="e#12141#12453#0" expanded="false" />
-                <element signature="e#13935#14983#0" expanded="false" />
-                <element signature="e#15022#16495#0" expanded="false" />
-                <element signature="e#17816#18865#0" expanded="false" />
-                <element signature="e#21481#22059#0" expanded="false" />
-                <element signature="e#22145#22698#0" expanded="false" />
+                <element signature="e#5885#6085#0" expanded="false" />
+                <element signature="e#6123#6498#0" expanded="false" />
+                <element signature="e#12108#12420#0" expanded="false" />
+                <element signature="e#13902#14950#0" expanded="false" />
+                <element signature="e#14989#16462#0" expanded="false" />
+                <element signature="e#17835#18884#0" expanded="false" />
+                <element signature="e#22139#22692#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -44,10 +43,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>sigm</find>
-      <find>def sig</find>
-      <find>def sigm</find>
-      <find>sigmoid</find>
       <find>output</find>
       <find>output_error</find>
       <find>date</find>
@@ -67,13 +62,17 @@
       <find>vector_accu</find>
       <find>save_</find>
       <find>save</find>
-      <find>graph_error_over_time</find>
       <find>expected_output</find>
-      <find>graph</find>
       <find>start test</find>
       <find>deriv</find>
       <find>rolling</find>
       <find>ar</find>
+      <find>auto_</find>
+      <find>aapl</find>
+      <find>graph_error_over_time</find>
+      <find>for i</find>
+      <find>graph</find>
+      <find>log_predi</find>
     </findStrings>
     <replaceStrings>
       <replace>fetch_training_testing_vectors</replace>
@@ -95,9 +94,9 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-5" />
-    <option name="y" value="49" />
-    <option name="width" value="1367" />
+    <option name="x" value="-2" />
+    <option name="y" value="45" />
+    <option name="width" value="1371" />
     <option name="height" value="719" />
   </component>
   <component name="ProjectReloadState">
@@ -314,10 +313,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-5" y="49" width="1367" height="719" extended-state="0" />
+    <frame x="-2" y="45" width="1371" height="719" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0059215394" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0051660514" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -347,7 +346,19 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="79" />
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/fsnn.py</url>
+          <line>529</line>
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/fsnn.py</url>
+          <line>521</line>
+          <option name="timeStamp" value="84" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="86" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -360,9 +371,35 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/fsnn.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9078">
+          <caret line="534" column="32" lean-forward="true" selection-start-line="534" selection-start-column="32" selection-end-line="534" selection-end-column="32" />
+          <folding>
+            <element signature="e#162#282#0" expanded="true" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fsnn.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#162#282#0" expanded="true" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -370,7 +407,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="43" column="21" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#162#282#0" expanded="true" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -378,7 +424,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="360" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#162#282#0" expanded="true" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -386,7 +441,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="300" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#162#282#0" expanded="true" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -401,7 +465,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-602">
           <caret line="753" column="0" lean-forward="false" selection-start-line="753" selection-start-column="0" selection-end-line="753" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -417,7 +480,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="131">
           <caret line="2151" column="39" lean-forward="true" selection-start-line="2151" selection-start-column="39" selection-end-line="2151" selection-end-column="39" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -425,24 +487,54 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="97">
           <caret line="553" column="0" lean-forward="false" selection-start-line="553" selection-start-column="0" selection-end-line="553" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../TwitterFollowBot/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../TwitterFollowBot/version.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../TwitterFollowBot/TwitterFollowBot/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-377">
+          <caret line="262" column="0" lean-forward="true" selection-start-line="262" selection-start-column="0" selection-end-line="262" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Python27/Lib/site-packages/matplotlib/axes/_base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="227" column="32" lean-forward="true" selection-start-line="227" selection-start-column="32" selection-end-line="227" selection-end-column="32" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/fsnn.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="534" column="32" lean-forward="true" selection-start-line="534" selection-start-column="32" selection-end-line="534" selection-end-column="32" />
+        <state relative-caret-position="153">
+          <caret line="522" column="29" lean-forward="false" selection-start-line="522" selection-start-column="29" selection-end-line="522" selection-end-column="29" />
           <folding>
             <element signature="e#162#282#0" expanded="true" />
-            <element signature="e#5918#6118#0" expanded="false" />
-            <element signature="e#6156#6531#0" expanded="false" />
-            <element signature="e#12141#12453#0" expanded="false" />
-            <element signature="e#13935#14983#0" expanded="false" />
-            <element signature="e#15022#16495#0" expanded="false" />
-            <element signature="e#17816#18865#0" expanded="false" />
-            <element signature="e#21481#22059#0" expanded="false" />
-            <element signature="e#22145#22698#0" expanded="false" />
+            <element signature="e#5885#6085#0" expanded="false" />
+            <element signature="e#6123#6498#0" expanded="false" />
+            <element signature="e#12108#12420#0" expanded="false" />
+            <element signature="e#13902#14950#0" expanded="false" />
+            <element signature="e#14989#16462#0" expanded="false" />
+            <element signature="e#17835#18884#0" expanded="false" />
+            <element signature="e#22139#22692#0" expanded="false" />
           </folding>
         </state>
       </provider>
