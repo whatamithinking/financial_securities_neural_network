@@ -138,7 +138,7 @@ class Network:
 
     def __init__(self, neuron_activation_function,effector_activation_function, name='SNP_ANN_FSNN', security='SNP',
                  rows=50, columns=2, training_testing_ratio=0.7,
-                 output_vector_parameters=[1, 4], input_vector_parameters=['Close', 'Volume', 'Open', 'Adj Close'],
+                 output_vector_parameters=[1, 1], input_vector_parameters=['Close', 'Volume', 'Open', 'Adj Close'],
                  learning_rate=0.05):
 
         print('Initializing network...')
@@ -192,14 +192,24 @@ class Network:
 
         # STORE DIMENSIONS OF NETWORK
         self.network_dimensions = [[self.receptor_matrix_rows, self.receptor_matrix_columns],
-                              [self.neuron_matrix_rows, self.neuron_matrix_columns],
-                              [self.effector_matrix_rows, self.effector_matrix_columns]]
+                                    [self.neuron_matrix_rows, self.neuron_matrix_columns],
+                                    [self.effector_matrix_rows, self.effector_matrix_columns]]
 
-        # GENERATE THE EMPTY NETWORK
+        # VERIFY NETWORK DESIGN WITH SIMPLE FUNCTION INPUT/OUTPUT VECTORS
+        security_network_dimensions = self.network_dimensions
+        security_output_vector_parameters = self.output_vector_parameters
+        self.output_vector_parameters = [0]
+        self.network_dimensions = [[1,1], [self.neuron_matrix_rows, self.neuron_matrix_columns], [1,1]]
         self.build()
+        self.train_on_function()
+        self.graph_error_over_time()
 
-        # TRAIN NETWORK
-        self.train()
+        # REBUILD NETWORK AND LEARN ON SECURITY DATA
+        self.network_dimensions = security_network_dimensions
+        self.output_vector_parameters = security_output_vector_parameters
+        self.build()
+        self.train_on_security()
+        self.graph_error_over_time()
 
     def generate_output_vectors(self):
         '''Generate all of the output vectors, using the user's inputted output vectors.'''
@@ -265,31 +275,6 @@ class Network:
 
         return vector_date_list
 
-    def fetch_training_testing_vectors(self):
-        '''Get all of the data for training and for testing, and chop according in the ratio provided by the user.'''
-
-        print('     splicing training/testing data vectors...')
-
-        self.input_vectors = self.generate_input_vectors()  # get list of input vectors
-        self.output_vectors = self.generate_output_vectors()
-        self.vector_date_list = self.generate_vector_date_list()
-
-        training_end_index = int(self.training_testing_ratio * (len(self.input_vectors)-1))
-
-        self.input_vectors_training_set = [self.input_vectors[x] for x in range(training_end_index)]
-        self.input_vectors_testing_set = [self.input_vectors[training_end_index + x] for x in
-                                          range(len(self.input_vectors)-training_end_index-1)]
-
-        self.output_vectors_training_set = [self.output_vectors[x] for x in range(training_end_index)]
-        self.output_vectors_testing_set = [self.output_vectors[training_end_index + x] for x in
-                                           range(len(self.output_vectors)-training_end_index-1)]
-
-        self.vector_date_list_training_set = [self.vector_date_list[x] for x in range(training_end_index)]
-        self.vector_date_list_testing_set = [self.vector_date_list[training_end_index + x] for x in
-                                        range(len(self.vector_date_list)-training_end_index-1)]
-
-        return True
-
     def build(self):
         '''The neural network requires the input and output of every neuron to be saved. All of the inputs and outputs
         are saved in separate matrices to improve readability.'''
@@ -337,11 +322,57 @@ class Network:
         # empty array for effector neurons (outputs)
         self.delta_errors.append(np.zeros((self.network_dimensions[2][0], np.size([0]))))
 
-    def train(self):
+    def fetch_training_testing_vectors(self, input_vectors, output_vectors, vector_date_list=None):
+        '''Get all of the data for training and for testing, and chop according in the ratio provided by the user.'''
+
+        print('     splicing training/testing data vectors...')
+
+        training_end_index = int(self.training_testing_ratio * (len(input_vectors)-1))
+
+        input_vectors_training_set = [input_vectors[x] for x in range(training_end_index)]
+        input_vectors_testing_set = [input_vectors[training_end_index + x] for x in
+                                          range(len(input_vectors)-training_end_index-1)]
+
+        output_vectors_training_set = [output_vectors[x] for x in range(training_end_index)]
+        output_vectors_testing_set = [output_vectors[training_end_index + x] for x in
+                                           range(len(output_vectors)-training_end_index-1)]
+
+        vector_date_list_training_set = [vector_date_list[x] for x in range(training_end_index)]
+        vector_date_list_testing_set = [vector_date_list[training_end_index + x] for x in
+                                        range(len(vector_date_list)-training_end_index-1)]
+
+        return input_vectors_training_set, input_vectors_testing_set, output_vectors_training_set, \
+               output_vectors_testing_set, vector_date_list_training_set, vector_date_list_testing_set
+
+    def train_on_function(self):
+        '''Sanity check for the network using sin(x) to generate inputs.'''
+
+        self.input_vectors = np.random.random((1000,1))
+        self.output_vectors = np.round(self.input_vectors)
+        self.vector_date_list = [datetime(date.today().year,date.today().month,date.today().day) - timedelta(days=1000-x) for x in range(1000)]
+
+        self.input_vectors_training_set, self.input_vectors_testing_set, self.output_vectors_training_set, \
+        self.output_vectors_testing_set, self.vector_date_list_training_set, self.vector_date_list_testing_set = \
+            self.fetch_training_testing_vectors(input_vectors=self.input_vectors, output_vectors=self.output_vectors,
+                                                vector_date_list=self.vector_date_list)
+
+        self.train()
+
+    def train_on_security(self):
         '''Train the neural network, ANN or RC, using the split training and testing data.'''
 
-        self.fetch_training_testing_vectors()
+        self.input_vectors = self.generate_input_vectors()  # get list of input vectors
+        self.output_vectors = self.generate_output_vectors()
+        self.vector_date_list = self.generate_vector_date_list()
 
+        self.input_vectors_training_set, self.input_vectors_testing_set, self.output_vectors_training_set, \
+        self.output_vectors_testing_set, self.vector_date_list_training_set, self.output_vectors_testing_set = \
+            self.fetch_training_testing_vectors(input_vectors=self.input_vectors, output_vectors=self.output_vectors,
+                                            vector_date_list=self.vector_date_list)
+
+        self.train()
+
+    def train(self):
         print('')
         print('Start Training')
         print('')
@@ -349,7 +380,6 @@ class Network:
         for i in range(3):
 
             for v in range(len(self.vector_date_list_training_set)):
-
                 self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
 
                 self.back_propagate(self.output_vectors_training_set[v])
@@ -366,7 +396,6 @@ class Network:
         print('')
 
         for v in range(len(self.vector_date_list_testing_set)):
-
             self.forward_propagate(self.input_vectors_testing_set[v], self.output_vectors_testing_set[v])
 
             self.log_prediction(self.vector_date_list_testing_set[v], self.input_vectors_testing_set[v],
@@ -514,12 +543,12 @@ class Network:
 
         plt.ion()   # enable interactive plotting
 
-        for series_index in range(len(self.prediction_log['expected_output_vector'])):
+        for series_index in range(len(self.prediction_log['expected_output_vector'][0])):
             y = [list(x) for x in zip(*self.prediction_log['expected_output_vector'])][series_index]
             x = [list(x) for x in zip(*self.prediction_log['prediction_end_dates'])][series_index]
             plt.plot(x,y,label='expected_output_'+str(self.output_vector_parameters[series_index]))
 
-        for series_index in range(len(self.prediction_log['actual_output_vectors'])):
+        for series_index in range(len(self.prediction_log['actual_output_vectors'][0])):
             y = (np.array(self.prediction_log['actual_output_vectors']).T)[series_index]
             x = (np.array(self.prediction_log['prediction_end_dates']).T)[series_index]
             plt.plot(x,y,label='actual_output_'+str(self.output_vector_parameters[series_index]))
