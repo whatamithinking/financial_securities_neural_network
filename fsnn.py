@@ -23,106 +23,146 @@ class FSNN:
                                '5dma', '10dma', '20dma', '50dma',
                                '100dma', '200dma']
 
-        network_action = ''
-        network_action = raw_input('Would you like to create a new network ("n") or load an existing one ("l")? ')
+        new_or_load_action = raw_input('Would you like to create a new network ("n") or load an existing one ("l")? ')
 
-        if network_action.strip() == 'n':
-            network_settings_accurate = 'N'
-            while network_settings_accurate == 'N':
-                if raw_input('Default(d) or new(n) settings? ').lower() == 'd':
-                    name = 'yhoo_fsnn'
-                    security = 'V'
-                    rows = 3
-                    columns = 3
-                    training_testing_ratio = 0.7
-                    input_vector_parameters = ['Close', '50dma', '200dma']
-                    outputs = [5, 50, 100, 200]
-                    learning_rate = 0.05
-                    neuron_activation_function_name = 'sigmoid'
-                    neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
-                    effector_activation_function_name = 'linear'
-                    effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
-                else:
-                    name = raw_input('Name your network: ')
+        if new_or_load_action.strip() == 'n':
 
-                    good_ticker = False
-                    while not good_ticker:
-                        security = raw_input('Ticker of security to train network on: ').upper()
-                        try:
-                            temp_data = web.DataReader(security, 'yahoo', '2010/01/01',date.today())['Close']
-                            good_ticker = True
-                        except:
-                            print('Could not find ticker.')
+            use_optimizer = raw_input('Do you want to use the optimizer(y/n)? ')
+            if 'y' in use_optimizer:
 
-                    rows = int(raw_input('Number of rows of Neurons: '))
-                    columns = int(raw_input('Number of columns of Neurons: '))
-                    training_testing_ratio = float(raw_input('Training / Testing ratio (decimal): '))
+                SECURITY = 'YHOO'
+                OUTPUTS = [1]
+                INPUT_VECTOR_PARAMETERS = ['Close', '3dma', '9dma']
+                NEURON_ACTIVATION_FUNCTION = tanh
+                EFFECTOR_ACTIVATION_FUNCTION = linear
+
+                learning_rate_list = np.linspace(0.01, 0.2, 10)
+                rows_list = np.linspace(1, 15, 1)
+                columns_list = np.linspace(1, 15, 1)
+                training_testing_ratio_list = np.linspace(0.1, 1, 10)
+                median_errors = []
+                network_characteristics = []
+                for learning_rate in learning_rate_list:
+                    for r in rows_list:
+                        for c in columns_list:
+                            for ratio in training_testing_ratio_list:
+                                name = 'rate_' + str(learning_rate) + \
+                                       ' ' + 'rows_' + str(r) + \
+                                       ' ' + 'cols_' + str(c) + \
+                                       ' ' + 'ratio_' + str(ratio)
+                                self.network = Network(name=name, security=SECURITY, rows=int(r), columns=int(c),
+                                                       training_testing_ratio=ratio,
+                                                       output_vector_parameters=OUTPUTS,
+                                                       input_vector_parameters=INPUT_VECTOR_PARAMETERS,
+                                                       neuron_activation_function=NEURON_ACTIVATION_FUNCTION,
+                                                       effector_activation_function=EFFECTOR_ACTIVATION_FUNCTION,
+                                                       learning_rate=learning_rate)
+                                network_characteristics.append(name)
+                                median_errors.append(np.median(self.network.prediction_log['errors']))
+            else:
+                network_settings_accurate = 'N'
+                while network_settings_accurate == 'N':
+                    if raw_input('Default(d) or new(n) settings? ').lower() == 'd':
+                        name = 'yhoo_fsnn'
+                        security = 'YHOO'
+                        rows = 10
+                        columns = 4
+                        training_testing_ratio = 0.5
+                        input_vector_parameters = ['Close', '3dma', '9dma']
+                        outputs = [1]
+                        learning_rate = 0.05
+                        neuron_activation_function_name = 'tanh'
+                        neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
+                        effector_activation_function_name = 'linear'
+                        effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
+                    else:
+                        name = raw_input('Name your network: ')
+
+                        good_ticker = False
+                        while not good_ticker:
+                            security = raw_input('Ticker of security to train network on: ').upper()
+                            try:
+                                temp_data = web.DataReader(security, 'yahoo', '2010/01/01',date.today())['Close']
+                                good_ticker = True
+                            except:
+                                print('Could not find ticker.')
+
+                        rows = int(raw_input('Number of rows of Neurons: '))
+                        columns = int(raw_input('Number of columns of Neurons: '))
+                        training_testing_ratio = float(raw_input('Training / Testing ratio (decimal): '))
+                        print('')
+                        print('The following input vector parameters are available: ')
+                        print('')
+                        for parameter in security_parameters:
+                            print(parameter)
+                        print('')
+                        input_vector_parameters = raw_input('List the input vector parameters: ').split()
+                        print('')
+                        outputs = [int(x) for x in
+                                   raw_input('Number of days to lookforward (starting day after prediction): ').split()]
+                        print('')
+                        learning_rate = float(raw_input('Learning coefficient: '))
+                        print('Activation Functions: sigmoid, tanh, or linear')
+                        neuron_activation_function_name = raw_input(
+                            'Which activation function would you like to use for NEURONS?: ')
+                        neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
+                        effector_activation_function_name = raw_input(
+                            'Which activation function would you like to use for EFFECTORS?: ')
+                        effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
+
+                    print('*** Here are the network settings you have selected ***')
+                    print('Name: %s' % name)
+                    print('Security: %s' % security)
+                    print('Rows: %d' % rows)
+                    print('Columns: %d' % columns)
+                    print('Training/Testing Ratio: %f' % training_testing_ratio)
+                    print('Output Days (counting day of prediction): ')
+                    for period in outputs:
+                        print('     %s' % period)
                     print('')
-                    print('The following input vector parameters are available: ')
-                    print('')
-                    for parameter in security_parameters:
-                        print(parameter)
-                    print('')
-                    input_vector_parameters = raw_input('List the input vector parameters: ').split()
-                    print('')
-                    outputs = [int(x) for x in
-                               raw_input('Number of days to lookforward (starting day after prediction): ').split()]
-                    print('')
-                    learning_rate = float(raw_input('Learning coefficient: '))
-                    print('Activation Functions: sigmoid, tanh, or linear')
-                    neuron_activation_function_name = raw_input(
-                        'Which activation function would you like to use for NEURONS?: ')
-                    neuron_activation_function = getattr(sys.modules[__name__], neuron_activation_function_name)
-                    effector_activation_function_name = raw_input(
-                        'Which activation function would you like to use for EFFECTORS?: ')
-                    effector_activation_function = getattr(sys.modules[__name__], effector_activation_function_name)
+                    print('Input Vector Parameters: ')
+                    for selected_parameter in input_vector_parameters:
+                        print('     %s' % selected_parameter)
+                    print('Learning Coefficient: ' + str(learning_rate))
+                    print('NEURON Activation Function: ' + neuron_activation_function_name)
+                    print('EFFECTOR Activation Function: ' + effector_activation_function_name)
+                    print('*** End network parameters ***')
+                    network_settings_accurate = raw_input('Are these settings correct? (Y/N) ')
 
-                print('*** Here are the network settings you have selected ***')
-                print('Name: %s' % name)
-                print('Security: %s' % security)
-                print('Rows: %d' % rows)
-                print('Columns: %d' % columns)
-                print('Training/Testing Ratio: %f' % training_testing_ratio)
-                print('Output Days (counting day of prediction): ')
-                for period in outputs:
-                    print('     %s' % period)
-                print('')
-                print('Input Vector Parameters: ')
-                for selected_parameter in input_vector_parameters:
-                    print('     %s' % selected_parameter)
-                print('Learning Coefficient: ' + str(learning_rate))
-                print('NEURON Activation Function: ' + neuron_activation_function_name)
-                print('EFFECTOR Activation Function: ' + effector_activation_function_name)
-                print('*** End network parameters ***')
-                network_settings_accurate = raw_input('Are these settings correct? (Y/N) ')
-
-            self.network = Network(name=name, security=security, rows=rows, columns=columns,
-                                   training_testing_ratio=training_testing_ratio,
-                                   output_vector_parameters=outputs, input_vector_parameters=input_vector_parameters,
-                                   neuron_activation_function=neuron_activation_function,
-                                   effector_activation_function=effector_activation_function,
-                                   learning_rate=learning_rate)
-
-            self.network.graph_error_over_time()
+                self.network = Network(name=name, security=security, rows=rows, columns=columns,
+                                       training_testing_ratio=training_testing_ratio,
+                                       output_vector_parameters=outputs, input_vector_parameters=input_vector_parameters,
+                                       neuron_activation_function=neuron_activation_function,
+                                       effector_activation_function=effector_activation_function,
+                                       learning_rate=learning_rate)
 
             self.save_network()
 
-        elif network_action.strip() == 'load':
+        else:
 
             self.load_network()
 
     def load_network(self):
         '''Load network from file.'''
 
-        network_location = input("Please type the address of the network's file: ")
+        network_location = r'' + input("Please type the address of the network's file: ")
         self.network = pickle.load(open(network_location, 'rb'))
 
         return True
 
     def save_network(self):
         '''Save the Network object using pickle library.'''
-        file_name = raw_input('Name file: ')
-        save_location = raw_input('Type file save location: ')
+
+        if 'y' in raw_input('Default save settings? '):
+
+            file_name = 'new_fsnn'
+            save_location = 'C:\Users\Connor\Desktop'
+
+        else:
+
+            file_name = raw_input('Name file: ')
+            save_location = raw_input('Type file save location: ')
+
         save_path = save_location + '/' + file_name + '.p'
         print('Saving network...')
         pickle.dump(self.network, open(save_path, 'wb'))
@@ -198,18 +238,27 @@ class Network:
         # VERIFY NETWORK DESIGN WITH SIMPLE FUNCTION INPUT/OUTPUT VECTORS
         security_network_dimensions = self.network_dimensions
         security_output_vector_parameters = self.output_vector_parameters
+        security = self.security
+        self.security = 'SINE'
         self.output_vector_parameters = [0]
         self.network_dimensions = [[1,1], [self.neuron_matrix_rows, self.neuron_matrix_columns], [1,1]]
         self.build()
         self.train_on_function()
-        self.graph_error_over_time()
+        self.graph_error_over_time('function '+self.name)
+        for key in self.prediction_log:
+            self.prediction_log[key] = []
 
         # REBUILD NETWORK AND LEARN ON SECURITY DATA
         self.network_dimensions = security_network_dimensions
         self.output_vector_parameters = security_output_vector_parameters
+        self.security = security
+        self.weights = []
+        self.inputs = []
+        self.outputs = []
+        self.delta_errors = []
         self.build()
         self.train_on_security()
-        self.graph_error_over_time()
+        self.graph_error_over_time('stock '+self.name)
 
     def generate_output_vectors(self):
         '''Generate all of the output vectors, using the user's inputted output vectors.'''
@@ -280,8 +329,9 @@ class Network:
         are saved in separate matrices to improve readability.'''
 
         print('     building empty weight matrices...')
-        # matrix of weights for inputs. Number of rows equals number of input vectors. Number of columns is 1.
-        self.weights.append(np.random.rand(self.network_dimensions[0][1], np.size([0])))
+        # matrix of weights for inputs. Number of rows equals number of input vectors. Number of columns is the number
+        # of rows in hidden neuron layer
+        self.weights.append(np.random.rand(self.network_dimensions[0][0],self.network_dimensions[1][0]))
         # matrix of weights for hidden layer. Number of rows/cols = number of rows of neurons.
         # Each row is a neuron's weights for the following layer. Last weight array for effectors has different shape.
         for x in range(0,self.network_dimensions[1][1] - 1):
@@ -345,10 +395,10 @@ class Network:
                output_vectors_testing_set, vector_date_list_training_set, vector_date_list_testing_set
 
     def train_on_function(self):
-        '''Sanity check for the network using sin(x) to generate inputs.'''
+        '''Sanity check for the network using a function to generate inputs.'''
 
         self.input_vectors = np.random.random((1000,1))
-        self.output_vectors = np.round(self.input_vectors)
+        self.output_vectors = np.sin(self.input_vectors)
         self.vector_date_list = [datetime(date.today().year,date.today().month,date.today().day) - timedelta(days=1000-x) for x in range(1000)]
 
         self.input_vectors_training_set, self.input_vectors_testing_set, self.output_vectors_training_set, \
@@ -366,7 +416,7 @@ class Network:
         self.vector_date_list = self.generate_vector_date_list()
 
         self.input_vectors_training_set, self.input_vectors_testing_set, self.output_vectors_training_set, \
-        self.output_vectors_testing_set, self.vector_date_list_training_set, self.output_vectors_testing_set = \
+        self.output_vectors_testing_set, self.vector_date_list_training_set, self.vector_date_list_testing_set = \
             self.fetch_training_testing_vectors(input_vectors=self.input_vectors, output_vectors=self.output_vectors,
                                             vector_date_list=self.vector_date_list)
 
@@ -377,17 +427,16 @@ class Network:
         print('Start Training')
         print('')
 
-        for i in range(3):
 
-            for v in range(len(self.vector_date_list_training_set)):
-                self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
+        for v in range(len(self.vector_date_list_training_set)):
+            self.forward_propagate(self.input_vectors_training_set[v], self.output_vectors_training_set[v])
 
-                self.back_propagate(self.output_vectors_training_set[v])
+            self.back_propagate(self.output_vectors_training_set[v])
 
-                self.log_prediction(self.vector_date_list_training_set[v], self.input_vectors_training_set[v],
-                                    self.output_vectors_training_set[v], learned_from=True)
+            self.log_prediction(self.vector_date_list_training_set[v], self.input_vectors_training_set[v],
+                                self.output_vectors_training_set[v], learned_from=True)
 
-                self.reset_i_o_de()
+            self.reset_i_o_de()
 
         print('')
         print('End Training')
@@ -428,9 +477,12 @@ class Network:
         built with weight, input, output, and delta_error arrays.'''
 
         # FEED FORWARD
-        self.outputs[0] = self.inputs[0] = np.array([input_vector]).T
-        input_sum = sum(np.array(np.array(self.weights[0]).T) * np.array(np.array(self.inputs[0]).T)[0])[0]
-        self.inputs[1] = np.array([[input_sum] for x in range(0,self.network_dimensions[1][0])])
+        self.inputs[0] = np.array([input_vector]).T
+        self.outputs[0] = np.array(self.neuron_activation_function(np.array(self.inputs[0]).T, deriv=False)).T
+        temp = []
+        for neuron_index in range(len(self.weights[0])):  # iterate over each neuron
+            temp.append(self.outputs[0][neuron_index][0] * np.array(self.weights[0][neuron_index]))  # multiply neuron's charge by each of its weights for the following layer
+        self.inputs[1] = np.array([sum(temp)]).T  # sum column, transpose, set as next layer's input
 
         for layer_index in range(1, len(self.inputs)-1):    # only go up to the second to last input in loop
 
@@ -517,7 +569,7 @@ class Network:
         self.prediction_log['input_vector'].append(Input_Vector)
 
         Expected_Output_Vector = np.around(output_vector, DIGITS_TO_ROUND_OFF).tolist()
-        self.prediction_log['expected_output_vector'].append(Expected_Output_Vector)
+        self.prediction_log['expected_output_vector'].append((Expected_Output_Vector))
 
         Output_Vector_Dates = []
         for period in self.output_vector_parameters:
@@ -527,7 +579,7 @@ class Network:
         Actual_Output_Vector = [np.around(self.outputs[len(self.outputs) - 1][x][0], DIGITS_TO_ROUND_OFF) for x in range(len(self.outputs[len(self.outputs) - 1]))]
         self.prediction_log['actual_output_vectors'].append(Actual_Output_Vector)
 
-        Errors = np.around(self.vector_output_error[0], DIGITS_TO_ROUND_OFF).tolist()
+        Errors = np.around(np.array(self.vector_output_error).T[0], DIGITS_TO_ROUND_OFF).tolist()
         self.prediction_log['errors'].append(Errors)
 
         print(new_epoch, learned_from, self.security, Prediction_Start_Date, Input_Vector, Expected_Output_Vector,
@@ -537,25 +589,34 @@ class Network:
         '''Take in the input_vector, predict an output and learn from that one input vector, by altering the
         weights in the network.'''
 
-    def graph_error_over_time(self):
+    def graph_error_over_time(self, plot_name):
         '''Generate and return a graph from the error value(s) recorded for each input vector, along with the
         predicted and expected values.'''
 
         plt.ion()   # enable interactive plotting
 
         for series_index in range(len(self.prediction_log['expected_output_vector'][0])):
-            y = [list(x) for x in zip(*self.prediction_log['expected_output_vector'])][series_index]
+            y = []
+            for i in range(len(self.prediction_log['expected_output_vector'])):
+                try:
+                    y.append(self.prediction_log['expected_output_vector'][i][series_index])
+                except:
+                    y.append(0)
             x = [list(x) for x in zip(*self.prediction_log['prediction_end_dates'])][series_index]
             plt.plot(x,y,label='expected_output_'+str(self.output_vector_parameters[series_index]))
 
         for series_index in range(len(self.prediction_log['actual_output_vectors'][0])):
-            y = (np.array(self.prediction_log['actual_output_vectors']).T)[series_index]
+            y = []
+            for i in range(len(self.prediction_log['actual_output_vectors'])):
+                y.append(self.prediction_log['actual_output_vectors'][i][series_index])
             x = (np.array(self.prediction_log['prediction_end_dates']).T)[series_index]
             plt.plot(x,y,label='actual_output_'+str(self.output_vector_parameters[series_index]))
 
         plt.subplot(111).legend()
         plt.show()
-
+        plot_path = r'' + 'C:\Users\Connor\Desktop/' + plot_name + '.jpg'
+        plt.savefig(plot_path)
+        plt.close()
         return True
 
 def sigmoid(x, deriv=False):
@@ -563,7 +624,7 @@ def sigmoid(x, deriv=False):
     element-wise. Use numpy. '''
 
     if deriv:  # if derivation of activation function requested
-        return sigmoid(x) * (1 - sigmoid(x))
+        return (np.exp(-x)/(1+np.exp(-x))**2)
 
     else:
         return 1 / (1 + np.exp(-x))
