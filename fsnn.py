@@ -11,19 +11,55 @@ import numpy as np
 import pickle
 import sys
 import matplotlib.pyplot as plt
-from cmd import Cmd
+from cmd2 import Cmd
 from tqdm import tqdm, trange
 from time import sleep
+import os
 
-class Network(Cmd):
+
+class Network_Builder(Cmd):
+    '''Build/work with the Network class.'''
+
+    def __init__(self):
+
+        Cmd.__init__(self, use_ipython=True)
+        self.network = Network()
+
+    @classmethod
+    def do_load_network(self):
+        '''Load network from file.'''
+
+        network_location = r'' + input("Please type the address of the network's file: ")
+        self.network = pickle.load(open(network_location, 'rb'))
+
+        return True
+
+    @classmethod
+    def do_save_network(self):
+        '''Save the Network object using pickle library.'''
+
+        if 'y' in raw_input('Default save settings?(y/n) '):
+            file_name = self.network.name
+            save_location = self.network.save_path
+
+        else:
+            file_name = raw_input('Name file: ')
+            save_location = raw_input('Type file save location: ')
+
+        save_path = save_location + '/' + file_name + '.p'
+        print('Saving network...')
+        pickle.dump(self.network, open(save_path, 'wb'))
+        print('Network successfully saved to: ' + save_path)
+        return True
+
+
+class Network:
     '''The Neural Network houses all of the Receptor, Neuron, and Effector objects.'''
 
     SECURITY_START_DATE = datetime(year=1900, month=1, day=1)
     SECURITY_END_DATE = datetime(date.today().year,date.today().month,date.today().day)
 
     def __init__(self):
-
-        Cmd.__init__(self)
 
         self.input_vectors = None
         self.output_vectors = None
@@ -39,7 +75,6 @@ class Network(Cmd):
         self.optimized = False
         self.trained_on_function = False
         self.trained_on_security = False
-        self.plots = {}    # dictionary of graphs of expected and actual values for the network
         self.graphed_outputs = False
         self.save_path = 'C:/'
         self.short_info = None
@@ -51,6 +86,9 @@ class Network(Cmd):
         self.inputs = []
         self.delta_errors = []
         self.vector_output_error = []
+
+    def do_build_new(self):
+        '''Build a new Network. Set the parameters. Guided setup.'''
 
         train_on_function = 'n'
         train_on_security = 'y'
@@ -96,6 +134,8 @@ class Network(Cmd):
                 print('')
 
                 good_settings = raw_input('Good settings?(y/n) ')
+                if 'n' in good_settings:    # allow user opportunity to make adjustments to settings
+                    use_defaults = 'n'
 
             graph_outputs = raw_input('Graph outputs?(y/n) ').lower()
             if 'y' in graph_outputs:
@@ -103,7 +143,7 @@ class Network(Cmd):
 
         else:   # load the Network from a file using Pickle
 
-            self.do_load_network() # request the Network file and load using pickle
+            Network_Builder.do_load_network() # request the Network file and load using pickle
             print('Network loaded from file!')
 
         print('')
@@ -129,31 +169,6 @@ class Network(Cmd):
 
             self.build()
             self.do_train_on_security()
-
-    def do_load_network(self):
-        '''Load network from file.'''
-
-        network_location = r'' + input("Please type the address of the network's file: ")
-        Network = pickle.load(open(network_location, 'rb'))
-
-        return True
-
-    def do_save_network(self):
-        '''Save the Network object using pickle library.'''
-
-        if 'y' in raw_input('Default save settings? '):
-            file_name = self.name
-            save_location = 'C:/'
-
-        else:
-            file_name = raw_input('Name file: ')
-            save_location = raw_input('Type file save location: ')
-
-        save_path = save_location + '/' + file_name + '.p'
-        print('Saving network...')
-        pickle.dump(Network, open(save_path, 'wb'))
-        print('Network saved: ' + save_path)
-        return True
 
     def do_delete_network(self):
         '''Delete the network matrices as well as some other settings and information.'''
@@ -311,7 +326,7 @@ class Network(Cmd):
                                    [neuron_matrix_rows, neuron_matrix_columns],
                                    [effector_matrix_rows, effector_matrix_columns]]
 
-        self.short_info = self.name + '#nrows/ncols/ratio/rate##' + \
+        self.short_info = self.name + '#nrows-ncols-ratio-rate##' + \
                             str(self.network_dimensions[1][0]) + ' ' + \
                                 str(self.network_dimensions[1][1]) + ' ' + \
                                     str(self.training_testing_ratio) + ' ' + \
@@ -324,13 +339,20 @@ class Network(Cmd):
 
         self.do_delete_network_matrices()
 
-        security = 'YHOO'
+        if self.trained_on_security:
+            security = 'YHOO'
+            input_vector_parameters = ['Close', '3dma', '9dma']
+            output_vector_parameters = [1]
+
+        elif self.trained_on_function:
+            security = 'SINE'
+            input_vector_parameters = ['x']
+            output_vector_parameters = [0]
+
         name = security.lower() + '_network'
         neuron_matrix_rows = 3
         neuron_matrix_columns = 2
         training_testing_ratio = 0.4
-        input_vector_parameters = ['Close', '3dma', '9dma']
-        outputs = [1]
         learning_rate = 0.02
         neuron_activation_function = tanh
         effector_activation_function = linear
@@ -342,7 +364,7 @@ class Network(Cmd):
                                     neuron_matrix_rows=neuron_matrix_rows,
                                     neuron_matrix_columns=neuron_matrix_columns,
                                     input_vector_parameters=input_vector_parameters,
-                                    output_vector_parameters=outputs,
+                                    output_vector_parameters=output_vector_parameters,
                                     neuron_activation_function=neuron_activation_function,
                                     effector_activation_function=effector_activation_function)
 
@@ -498,12 +520,18 @@ class Network(Cmd):
 
         self.do_plot_outputs()
 
-    def do_export_plots(self):
-        '''Export plots and save them to self.save_path.'''
+    def do_export_plot(self, plt=None, plt_name=None):
+        '''Save the plot to self.save_path.'''
 
-        for plot in self.plots.keys():
-            plot_path = r'' + self.save_path + '/plots/' + plot + '.jpg'
-            self.plots[plot].savefig(plot_path)
+        plot_folder_path = r'' + self.save_path + '/plots/' # make directory if it does not exist yet
+        if not os.path.exists(plot_folder_path):
+            os.makedirs(plot_folder_path)
+
+        if plt:
+            if not plt_name:
+                plt_name = self.name + '_outputs_plot'
+            plot_path = r'' + self.save_path + '/plots/' + plt_name + '.jpg'
+            plt.savefig(plot_path)
 
         return True
 
@@ -706,8 +734,8 @@ class Network(Cmd):
 
             plt.subplot(111).legend()
 
-            self.plots[self.short_info] = plt # save plot to dictionary
-            plt.close() # close the plot instance, so future plots do not graph on top of it
+            self.do_export_plot(plt, self.short_info)   # export plot to folder in self.save_path '/plots/'
+            plt.close()  # close the plot instance, so future plots do not graph on top of it
 
             return True
 
@@ -794,6 +822,9 @@ class Network(Cmd):
 
         print('finished applying optimal settings.')
 
+        return True
+
+
 def sigmoid(x, deriv=False):
     '''Sigmoid function and its derivative. Return the matrix after each element has passed through function
     element-wise. Use numpy. '''
@@ -804,6 +835,7 @@ def sigmoid(x, deriv=False):
     else:
         return 1 / (1 + np.exp(-x))
 
+
 def tanh(x, deriv=False):
     '''Hyperbolic Tan function and its derivative. Return matrix of element-wise processed numbers.'''
 
@@ -812,6 +844,7 @@ def tanh(x, deriv=False):
 
     else:
         return np.tanh(x)
+
 
 def linear(x, deriv=False):
     '''Compute the linear function, which is just the same values as are inputted.'''
@@ -822,6 +855,7 @@ def linear(x, deriv=False):
     else:
         return x
 
+
 def isfloat(value):
   '''check if value is a float.'''
   try:
@@ -831,6 +865,6 @@ def isfloat(value):
     return False
 
 if __name__ == '__main__':
-    prompt = Network()
-    prompt.prompt = '>> '
-    prompt.cmdloop('Starting Network program...')
+    app = Network_Builder()
+    app.prompt = '>> '
+    app.cmdloop()
