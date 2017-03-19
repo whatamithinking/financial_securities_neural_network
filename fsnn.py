@@ -22,11 +22,11 @@ class Network_Builder(Cmd):
 
     def __init__(self):
 
-        Cmd.__init__(self, use_ipython=True)
+        Cmd.__init__(self)
         self.network = Network()
 
     @classmethod
-    def do_load_network(self):
+    def do_load_network(self, **kwargs):
         '''Load network from file.'''
 
         network_location = r'' + input("Please type the address of the network's file: ")
@@ -35,7 +35,7 @@ class Network_Builder(Cmd):
         return True
 
     @classmethod
-    def do_save_network(self):
+    def do_save_network(self, **kwargs):
         '''Save the Network object using pickle library.'''
 
         if 'y' in raw_input('Default save settings?(y/n) '):
@@ -87,7 +87,7 @@ class Network:
         self.delta_errors = []
         self.vector_output_error = []
 
-    def do_build_new(self):
+    def do_build_new(self, **kwargs):
         '''Build a new Network. Set the parameters. Guided setup.'''
 
         train_on_function = 'n'
@@ -170,7 +170,7 @@ class Network:
             self.build()
             self.do_train_on_security()
 
-    def do_delete_network(self):
+    def do_delete_network(self, **kwargs):
         '''Delete the network matrices as well as some other settings and information.'''
 
         self.do_delete_network_matrices()
@@ -185,7 +185,7 @@ class Network:
         self.learning_rate = None
         self.network_dimensions = None
 
-    def do_delete_network_matrices(self):
+    def do_delete_network_matrices(self, **kwargs):
         '''Delete the Network matrices '''
 
         self.weights = []
@@ -334,7 +334,7 @@ class Network:
 
         return True
 
-    def do_set_defaults(self):
+    def do_set_defaults(self, **kwargs):
         '''Set the Network arguments to the default values. Erases any existing network.'''
 
         self.do_delete_network_matrices()
@@ -350,10 +350,10 @@ class Network:
             output_vector_parameters = [0]
 
         name = security.lower() + '_network'
-        neuron_matrix_rows = 3
-        neuron_matrix_columns = 2
+        neuron_matrix_rows = 100
+        neuron_matrix_columns = 3
         training_testing_ratio = 0.4
-        learning_rate = 0.02
+        learning_rate = 0.6
         neuron_activation_function = tanh
         effector_activation_function = linear
 
@@ -501,7 +501,7 @@ class Network:
         return input_vectors_training_set, input_vectors_testing_set, output_vectors_training_set, \
                output_vectors_testing_set, vector_date_list_training_set, vector_date_list_testing_set
 
-    def do_train_on_function(self):
+    def do_train_on_function(self, **kwargs):
         '''Sanity check for the network using a function to generate inputs.'''
 
         self.input_vectors = np.random.random((1000,1))
@@ -535,7 +535,7 @@ class Network:
 
         return True
 
-    def do_train_on_security(self):
+    def do_train_on_security(self, **kwargs):
         '''Train the neural network, ANN or RC, using the split training and testing data.'''
 
         self.input_vectors = self.generate_security_input_vectors()  # get list of input vectors
@@ -576,7 +576,7 @@ class Network:
 
             #sleep(0.005)
 
-    def do_get_info(self):
+    def do_get_info(self, **kwargs):
         '''Get latest info on the network at a glance. Store in self.info.'''
         self.info = ['Name: ' + self.name,
                 'Security: ' + self.security,
@@ -709,7 +709,7 @@ class Network:
 
         return True
 
-    def do_plot_outputs(self):
+    def do_plot_outputs(self, **kwargs):
         '''Generate and return a graph from the error value(s) recorded for each input vector, along with the
         predicted and expected values.'''
 
@@ -743,7 +743,7 @@ class Network:
 
             return False
 
-    def do_optimize(self):
+    def do_optimize(self, **kwargs):
         '''Optimize the network construction by varying the number of rows, columns, learning rate, and the
         training to testing data ratio.'''
 
@@ -865,6 +865,4 @@ def isfloat(value):
     return False
 
 if __name__ == '__main__':
-    app = Network_Builder()
-    app.prompt = '>> '
-    app.cmdloop()
+    Network_Builder().cmdloop()
